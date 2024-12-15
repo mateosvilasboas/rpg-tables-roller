@@ -1,0 +1,29 @@
+version: '3'
+services:
+  app:
+    build: .
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+    volumes:
+      - ./app:/app
+
+  db:
+    image: postgres:17
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: 
+      POSTGRES_PASSWORD: 
+      POSTGRES_DB:
+    ports:
+      - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "runuser", "-u", "$POSTGRES_USER", "--", "pg_isready"]
+      interval: 1s
+      timeout: 30s
+      retries: 30
+
+volumes:
+  postgres_data:
