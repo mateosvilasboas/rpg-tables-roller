@@ -16,12 +16,14 @@ router = APIRouter(
 
 @router.get("/", response_model=list[ExampleGetSchema])
 async def get_examples(db: AsyncSession = Depends(get_db)):
-    print (await db.scalars(select(ExampleModel)))
     return await db.scalars(select(ExampleModel))
 
 @router.post("/", response_model=ExampleGetSchema)
 async def create_example(example: ExampleBaseSchema, db: AsyncSession = Depends(get_db)):
-    db_example = ExampleModel(name=example.name)
+    db_example = ExampleModel(
+        name=example.name,
+        address=example.address,
+        email=example.email,)
     db.add(db_example)
     await db.commit()
     await db.refresh(db_example)

@@ -1,15 +1,13 @@
-FROM python:3.12
+FROM python:3.12-slim
+ENV POETRY_VIRTUALENVS_CREATE=false
 
-WORKDIR /
-
-RUN curl -sSL https://install.python-poetry.org | python3 -
-ENV PATH="/root/.local/bin:${PATH}"
-
-COPY poetry.lock pyproject.toml ./
-RUN poetry config virtualenvs.create false
-RUN poetry install --no-dev
-
+WORKDIR /app
 COPY . .
 
+RUN pip install poetry
+
+RUN poetry config installer.max-workers 10
+RUN poetry install --no-interaction --no-ansi
+
 EXPOSE 8000
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD poetry run uvicorn --host 0.0.0.0 code.main:app

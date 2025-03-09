@@ -20,8 +20,5 @@ env/
 # Docker files
 docker-compose.yml
 
-# Poetry files
-poetry.lock
-
 # Other files
 .env
