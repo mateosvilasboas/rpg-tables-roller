@@ -3,7 +3,7 @@ from fastapi import FastAPI
 
 from .config import settings
 from .database import engine
-from .routers import router as example
+from .routers import router as User
 from .models import Base
 
 @asynccontextmanager
@@ -14,7 +14,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(example)
+app.include_router(User)
 
 @app.get("/")
 async def root():

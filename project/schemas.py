@@ -1,19 +1,20 @@
-from pydantic import BaseModel, model_serializer
+from pydantic import BaseModel, model_serializer, EmailStr
 
-class ExampleBaseSchema(BaseModel):
+class UserSchema(BaseModel):
     name: str
-    address: str
-    email: str
+    email: EmailStr
 
+class UserPublic(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+    
     class Config:
         from_attributes = True
 
-class ExampleGetSchema(ExampleBaseSchema):
-    id: int 
-    
-    @model_serializer(when_used='json')
-    def sort_model(self):
-        return dict([('id', self.id), 
-                     ('name', self.name),
-                     ('email', self.email),
-                     ('address', self.address)])
+class UserList(BaseModel):
+    users: list[UserPublic]
+
+class FilterPage(BaseModel):
+    offset: int = 0
+    limit: int = 100
