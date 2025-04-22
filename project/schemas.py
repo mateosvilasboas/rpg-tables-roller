@@ -1,4 +1,4 @@
-from pydantic import BaseModel, model_serializer, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 class UserSchema(BaseModel):
     name: str
@@ -9,8 +9,7 @@ class UserPublic(BaseModel):
     name: str
     email: EmailStr
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class UserList(BaseModel):
     users: list[UserPublic]
@@ -18,3 +17,6 @@ class UserList(BaseModel):
 class FilterPage(BaseModel):
     offset: int = 0
     limit: int = 100
+
+class Message(BaseModel):
+    message: str
