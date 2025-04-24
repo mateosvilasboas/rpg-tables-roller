@@ -4,11 +4,13 @@ from project.schemas import UserPublic
 
 
 def test_create_users(client):
+    password = 'senha'
     response = client.post(
         '/users/',
         json={
             'name': 'alice',
             'email': 'alice@example.com',
+            'password': password,
         },
     )
 
@@ -22,7 +24,7 @@ def test_create_users(client):
 
 def test_get_users(client):
     response = client.get(
-        'users',
+        '/users/',
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -30,7 +32,6 @@ def test_get_users(client):
 
 
 def test_get_users_with_users(client, user):
-    print(user)
     users_schema = UserPublic.model_validate(user).model_dump()
 
     response = client.get('/users/')
@@ -41,7 +42,7 @@ def test_get_users_with_users(client, user):
 def test_update_user(client, user):
     response = client.put(
         f'/users/{user.id}',
-        json={'name': 'teste da silva', 'email': 'teste@teste.com'},
+        json={'name': user.name, 'email': user.email},
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -50,12 +51,12 @@ def test_update_user(client, user):
 def test_update_user_integrity_error(client, user, other_user):
     client.post(
         '/users/',
-        json={'name': 'outro teste', 'email': 'outroteste@teste.com'},
+        json={'name': other_user.name, 'email': other_user.email},
     )
 
     response = client.put(
         f'/users/{user.id}',
-        json={'name': 'teste da silva', 'email': 'outroteste@teste.com'},
+        json={'name': user.name, 'email': 'outroteste@teste.com'},
     )
 
     assert response.status_code == HTTPStatus.CONFLICT

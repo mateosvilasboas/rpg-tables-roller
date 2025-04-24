@@ -6,6 +6,14 @@ class UserSchema(BaseModel):
     email: EmailStr
 
 
+class UserSchemaCreate(UserSchema):
+    password: str
+
+
+class UserSchemaUpdate(UserSchema):
+    password: str | None = None
+
+
 class UserPublic(BaseModel):
     id: int
     name: str
@@ -20,6 +28,11 @@ class UserList(BaseModel):
 class FilterPage(BaseModel):
     offset: int = 0
     limit: int = 100
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
 
 
 class Message(BaseModel):

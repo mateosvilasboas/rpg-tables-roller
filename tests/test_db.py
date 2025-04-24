@@ -4,12 +4,16 @@ import pytest
 from sqlalchemy import select
 
 from project.models import User
+from project.security import get_password_hash
 
 
 @pytest.mark.asyncio
 async def test_create_user(session, mock_db_time):
     with mock_db_time(model=User) as time:
-        new_user = User(name='alice', email='teste@test')
+        password_hash = get_password_hash('senha')
+        new_user = User(
+            name='alice', email='teste@test', password=password_hash
+        )
         session.add(new_user)
         await session.commit()
 
@@ -19,5 +23,6 @@ async def test_create_user(session, mock_db_time):
         'id': 1,
         'name': 'alice',
         'email': 'teste@test',
+        'password': password_hash,
         'created_at': time,
     }

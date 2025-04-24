@@ -1,7 +1,9 @@
 from jwt import decode
 
 from project.config import settings
-from project.security import create_access_token
+from project.security import (
+    create_access_token,
+)
 
 
 def test_jwt():

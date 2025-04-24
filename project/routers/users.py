@@ -8,7 +8,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_db
 from ..models import User
-from ..schemas import FilterPage, Message, UserList, UserPublic, UserSchema
+from ..schemas import (
+    FilterPage,
+    Message,
+    UserList,
+    UserPublic,
+    UserSchemaCreate,
+    UserSchemaUpdate,
+)
+from ..security import get_password_hash
 
 router = APIRouter(
     prefix='/users',
@@ -33,7 +41,7 @@ async def get_users(
 
 
 @router.post('/', status_code=HTTPStatus.CREATED, response_model=UserPublic)
-async def create_user(user: UserSchema, session: session):
+async def create_user(user: UserSchemaCreate, session: session):
     db_user = await session.scalar(
         select(User).where(User.email == user.email)
     )
@@ -45,10 +53,9 @@ async def create_user(user: UserSchema, session: session):
                 detail='Email already exists',
             )
 
-    db_user = User(
-        name=user.name,
-        email=user.email,
-    )
+    hashed_password = get_password_hash(user.password)
+
+    db_user = User(name=user.name, email=user.email, password=hashed_password)
 
     session.add(db_user)
     await session.commit()
@@ -58,7 +65,7 @@ async def create_user(user: UserSchema, session: session):
 
 
 @router.put('/{user_id}', response_model=UserPublic)
-async def update_user(user_id: int, user: UserSchema, session: session):
+async def update_user(user_id: int, user: UserSchemaUpdate, session: session):
     db_user = await session.scalar(select(User).where(User.id == user_id))
 
     if not db_user:
@@ -69,6 +76,10 @@ async def update_user(user_id: int, user: UserSchema, session: session):
     try:
         db_user.name = user.name
         db_user.email = user.email
+
+        if user.password:
+            db_user.password = get_password_hash(user.password)
+
         await session.commit()
         await session.refresh(db_user)
 

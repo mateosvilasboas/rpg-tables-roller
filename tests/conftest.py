@@ -11,6 +11,7 @@ from testcontainers.postgres import PostgresContainer
 from project.database import get_db
 from project.main import app
 from project.models import Base, User
+from project.security import get_password_hash
 
 
 @pytest.fixture
@@ -64,21 +65,35 @@ def mock_db_time():
 
 @pytest_asyncio.fixture
 async def user(session):
-    db_user = User(name='Teste', email='teste@teste.com')
+    password = 'senha1'
+    hashed_password = get_password_hash(password)
+    db_user = User(
+        name='Teste', email='teste@teste.com', password=hashed_password
+    )
 
     session.add(db_user)
     await session.commit()
     await session.refresh(db_user)
+
+    db_user.clean_password = password
 
     return db_user
 
 
 @pytest_asyncio.fixture
 async def other_user(session):
-    db_user = User(name='Outro Teste', email='outroteste@teste.com')
+    password = 'senha2'
+    hashed_password = get_password_hash(password)
+    db_user = User(
+        name='Outro Teste',
+        email='outroteste@teste.com',
+        password=hashed_password,
+    )
 
     session.add(db_user)
     await session.commit()
     await session.refresh(db_user)
+
+    db_user.clean_password = password
 
     return db_user
