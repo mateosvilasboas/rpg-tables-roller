@@ -10,7 +10,7 @@ from testcontainers.postgres import PostgresContainer
 
 from project.database import get_db
 from project.main import app
-from project.models import Base
+from project.models import Base, User
 
 
 @pytest.fixture
@@ -60,3 +60,25 @@ def _mock_db_time(*, model, time=datetime(2024, 1, 1)):
 @pytest.fixture
 def mock_db_time():
     return _mock_db_time
+
+
+@pytest_asyncio.fixture
+async def user(session):
+    db_user = User(name='Teste', email='teste@teste.com')
+
+    session.add(db_user)
+    await session.commit()
+    await session.refresh(db_user)
+
+    return db_user
+
+
+@pytest_asyncio.fixture
+async def other_user(session):
+    db_user = User(name='Outro Teste', email='outroteste@teste.com')
+
+    session.add(db_user)
+    await session.commit()
+    await session.refresh(db_user)
+
+    return db_user

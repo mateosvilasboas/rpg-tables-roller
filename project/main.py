@@ -1,13 +1,6 @@
 from fastapi import FastAPI
 
-from .routers import router as User
-
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     async with engine.begin():
-#         yield
-#     await engine.dispose()
-
+from .routers.users import router as User
 
 app = FastAPI()
 

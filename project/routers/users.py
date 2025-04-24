@@ -6,9 +6,9 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .database import get_db
-from .models import User as UserModel
-from .schemas import FilterPage, Message, UserList, UserPublic, UserSchema
+from ..database import get_db
+from ..models import User
+from ..schemas import FilterPage, Message, UserList, UserPublic, UserSchema
 
 router = APIRouter(
     prefix='/users',
@@ -24,7 +24,7 @@ async def get_users(
     filter_users: Annotated[FilterPage, Query()], session: session
 ):
     query = await session.scalars(
-        select(UserModel).offset(filter_users.offset).limit(filter_users.limit)
+        select(User).offset(filter_users.offset).limit(filter_users.limit)
     )
 
     users = query.all()
@@ -35,7 +35,7 @@ async def get_users(
 @router.post('/', status_code=HTTPStatus.CREATED, response_model=UserPublic)
 async def create_user(user: UserSchema, session: session):
     db_user = await session.scalar(
-        select(UserModel).where(UserModel.email == user.email)
+        select(User).where(User.email == user.email)
     )
 
     if db_user:
@@ -45,7 +45,7 @@ async def create_user(user: UserSchema, session: session):
                 detail='Email already exists',
             )
 
-    db_user = UserModel(
+    db_user = User(
         name=user.name,
         email=user.email,
     )
@@ -57,11 +57,9 @@ async def create_user(user: UserSchema, session: session):
     return db_user
 
 
-@router.put('/', response_model=UserPublic)
+@router.put('/{user_id}', response_model=UserPublic)
 async def update_user(user_id: int, user: UserSchema, session: session):
-    db_user = await session.scalar(
-        select(UserModel).where(UserModel.id == user_id)
-    )
+    db_user = await session.scalar(select(User).where(User.id == user_id))
 
     if not db_user:
         raise HTTPException(
@@ -85,9 +83,7 @@ async def update_user(user_id: int, user: UserSchema, session: session):
 
 @router.delete('/{user_id}', response_model=Message)
 async def delete_user(user_id: int, session: session):
-    db_user = await session.scalar(
-        select(UserModel).where(UserModel.id == user_id)
-    )
+    db_user = await session.scalar(select(User).where(User.id == user_id))
 
     if not db_user:
         raise HTTPException(
