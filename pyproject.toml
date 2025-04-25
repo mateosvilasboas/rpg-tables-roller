@@ -28,6 +28,8 @@ taskipy = "^1.14.1"
 ruff = "^0.11.6"
 aiosqlite = "^0.21.0"
 testcontainers = "^4.10.0"
+factory-boy = "^3.3.3"
+freezegun = "^1.5.1"
 
 [tool.pytest.ini_options]
 pythonpath = "."
@@ -44,7 +46,7 @@ quote-style = 'single'
 
 [tool.ruff.lint]
 preview = true
-select = ['I', 'F', 'E', 'W', 'PL', 'PT']
+select = ['I', 'F', 'E', 'W', 'PL', 'PT', 'FAST']
 
 [tool.taskipy.tasks]
 lint = 'ruff check'

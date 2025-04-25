@@ -16,7 +16,10 @@ from ..schemas import (
     UserSchemaCreate,
     UserSchemaUpdate,
 )
-from ..security import get_password_hash
+from ..security import get_current_user, get_password_hash
+
+Session = Annotated[AsyncSession, Depends(get_db)]
+CurrentUser = Annotated[User, Depends(get_current_user)]
 
 router = APIRouter(
     prefix='/users',
@@ -24,12 +27,10 @@ router = APIRouter(
     responses={404: {'description': 'Not found'}},
 )
 
-session = Annotated[AsyncSession, Depends(get_db)]
-
 
 @router.get('/', response_model=UserList)
 async def get_users(
-    filter_users: Annotated[FilterPage, Query()], session: session
+    filter_users: Annotated[FilterPage, Query()], session: Session
 ):
     query = await session.scalars(
         select(User).offset(filter_users.offset).limit(filter_users.limit)
@@ -41,7 +42,7 @@ async def get_users(
 
 
 @router.post('/', status_code=HTTPStatus.CREATED, response_model=UserPublic)
-async def create_user(user: UserSchemaCreate, session: session):
+async def create_user(user: UserSchemaCreate, session: Session):
     db_user = await session.scalar(
         select(User).where(User.email == user.email)
     )
@@ -65,25 +66,29 @@ async def create_user(user: UserSchemaCreate, session: session):
 
 
 @router.put('/{user_id}', response_model=UserPublic)
-async def update_user(user_id: int, user: UserSchemaUpdate, session: session):
-    db_user = await session.scalar(select(User).where(User.id == user_id))
-
-    if not db_user:
+async def update_user(
+    user_id: int,
+    user: UserSchemaUpdate,
+    session: Session,
+    current_user: CurrentUser,
+):
+    if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='Not enough permissions',
         )
 
     try:
-        db_user.name = user.name
-        db_user.email = user.email
+        current_user.name = user.name
+        current_user.email = user.email
 
         if user.password:
-            db_user.password = get_password_hash(user.password)
+            current_user.password = get_password_hash(user.password)
 
         await session.commit()
-        await session.refresh(db_user)
+        await session.refresh(current_user)
 
-        return db_user
+        return current_user
 
     except IntegrityError:
         raise HTTPException(
@@ -93,15 +98,16 @@ async def update_user(user_id: int, user: UserSchemaUpdate, session: session):
 
 
 @router.delete('/{user_id}', response_model=Message)
-async def delete_user(user_id: int, session: session):
-    db_user = await session.scalar(select(User).where(User.id == user_id))
-
-    if not db_user:
+async def delete_user(
+    user_id: int, session: Session, current_user: CurrentUser
+):
+    if current_user.id != user_id:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='User not found'
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='Not enough permissions',
         )
 
-    await session.delete(db_user)
+    await session.delete(current_user)
     await session.commit()
 
     return {'message': 'User deleted'}
