@@ -39,6 +39,12 @@ Crie um arquivo .env baseado no .env.example:
 cp .env.example .env
 ```
 
+Crie um arquivo docker-compose.yml baseado no docker-compose.yml.example
+
+```bash
+cp docker-compose.yml.example docker-compose.yml
+```
+
 Atualize as variáveis de ambiente no arquivo .env:
 
 ```
