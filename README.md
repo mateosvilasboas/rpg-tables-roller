@@ -65,7 +65,7 @@ A API estará disponível em `http://localhost:8000`
 ### Crie ou ative uma máquina virtual
 
 ```bash
-poetry env use # ou poetry env activate, caso já tenha uma máquina virtual do projeto
+poetry env activate
 ```
 
 ### Instale as dependências
