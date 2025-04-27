@@ -24,7 +24,7 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 router = APIRouter(
     prefix='/users',
     tags=['users'],
-    responses={404: {'description': 'Not found'}},
+    responses={404: {'detail': 'Not found'}},
 )
 
 

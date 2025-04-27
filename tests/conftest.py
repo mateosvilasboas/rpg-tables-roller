@@ -1,9 +1,9 @@
 from contextlib import contextmanager
 from datetime import datetime
 
-import factory
 import pytest
 import pytest_asyncio
+from factories import FrameworkFactory, UserFactory
 from fastapi.testclient import TestClient
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -11,7 +11,7 @@ from testcontainers.postgres import PostgresContainer
 
 from project.database import get_db
 from project.main import app
-from project.models import Base, User
+from project.models import Base
 from project.security import get_password_hash
 
 
@@ -94,6 +94,24 @@ async def other_user(session):
     return user
 
 
+@pytest_asyncio.fixture
+async def framework(session):
+    framework = FrameworkFactory()
+
+    framework.entries = {
+        'entry_key_1': 'entry_value_1',
+        'entry_key_2': 'entry_value_2',
+        'entry_key_3': 'entry_value_3',
+        'entry_key_4': 'entry_value_4',
+    }
+
+    session.add(framework)
+    await session.commit()
+    await session.refresh(framework)
+
+    return framework
+
+
 @pytest.fixture
 def token(client, user):
     response = client.post(
@@ -102,12 +120,3 @@ def token(client, user):
     )
 
     return response.json()['access_token']
-
-
-class UserFactory(factory.Factory):
-    class Meta:
-        model = User
-
-    name = factory.Sequence(lambda n: f'teste{n}')
-    email = factory.LazyAttribute(lambda obj: f'{obj.name}@teste.com')
-    password = factory.LazyAttribute(lambda obj: f'{obj.name}@example.com')

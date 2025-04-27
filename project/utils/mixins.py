@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from sqlalchemy import func
 from sqlalchemy.orm import Mapped, mapped_column
 
 
@@ -20,5 +21,20 @@ class SoftDeleteMixin:
         self.deleted_at = None
 
 
-class BaseMixins(SoftDeleteMixin):
+class CreateMixin:
+    created_at: Mapped[datetime] = mapped_column(
+        init=False, server_default=func.now()
+    )
+
+
+class UpdateMixin:
+    updated_at: Mapped[datetime] = mapped_column(
+        init=False, default=None, nullable=True
+    )
+
+    def set_updated_at(self):
+        self.updated_at = datetime.now()
+
+
+class BaseMixins(SoftDeleteMixin, CreateMixin, UpdateMixin):
     pass

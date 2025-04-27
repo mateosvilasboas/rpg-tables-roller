@@ -1,6 +1,20 @@
 from pydantic import BaseModel, ConfigDict, EmailStr
 
 
+class FrameworkSchema(BaseModel):
+    name: str
+    entries: dict[str, str]
+
+
+class FrameworkPublic(BaseModel):
+    id: int
+    user_id: int
+    name: str
+    entries: dict
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class UserSchema(BaseModel):
     name: str
     email: EmailStr
@@ -18,6 +32,7 @@ class UserPublic(BaseModel):
     id: int
     name: str
     email: EmailStr
+
     model_config = ConfigDict(from_attributes=True)
 
 

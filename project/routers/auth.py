@@ -18,7 +18,7 @@ from project.security import (
 router = APIRouter(
     prefix='/auth',
     tags=['auth'],
-    responses={404: {'description': 'Not found'}},
+    responses={404: {'detail': 'Not found'}},
 )
 
 Session = Annotated[AsyncSession, Depends(get_db)]
