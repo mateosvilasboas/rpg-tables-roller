@@ -33,7 +33,10 @@ async def get_users(
     filter_users: Annotated[FilterPage, Query()], session: Session
 ):
     query = await session.scalars(
-        select(User).offset(filter_users.offset).limit(filter_users.limit)
+        select(User)
+        .where(User.is_deleted == False)  # noqa
+        .offset(filter_users.offset)
+        .limit(filter_users.limit)
     )
 
     users = query.all()
@@ -107,7 +110,12 @@ async def delete_user(
             detail='Not enough permissions',
         )
 
-    await session.delete(current_user)
+    if current_user.is_deleted:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail='User already deleted'
+        )
+
+    current_user.soft_delete()
     await session.commit()
 
     return {'message': 'User deleted'}

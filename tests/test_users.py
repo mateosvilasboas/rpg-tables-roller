@@ -1,5 +1,9 @@
 from http import HTTPStatus
 
+import pytest
+from sqlalchemy import select
+
+from project.models import User
 from project.schemas import UserPublic
 
 
@@ -59,6 +63,7 @@ def test_get_users_with_users(client, user):
 
     response = client.get('/users/')
 
+    assert response.status_code == HTTPStatus.OK
     assert response.json() == {'users': [users_schema]}
 
 
@@ -138,7 +143,8 @@ def test_update_user_with_wrong_user(client, other_user, token):
     assert response.json() == {'detail': 'Not enough permissions'}
 
 
-def test_delete_user(client, user, token):
+@pytest.mark.asyncio
+async def test_delete_user(client, user, token, session):
     response = client.delete(
         f'/users/{user.id}',
         headers={'Authorization': f'Bearer {token}'},
@@ -147,8 +153,14 @@ def test_delete_user(client, user, token):
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {'message': 'User deleted'}
 
+    deleted_user = await session.scalar(select(User).where(User.id == user.id))  # noqa
 
-def test_delete_user_with_wrong_user(client, other_user, token):
+    assert deleted_user.is_deleted is True
+    assert deleted_user.deleted_at is not None
+
+
+@pytest.mark.asyncio
+async def test_delete_user_with_wrong_user(client, other_user, token, session):
     response = client.delete(
         f'/users/{other_user.id}',
         headers={'Authorization': f'Bearer {token}'},
@@ -156,3 +168,10 @@ def test_delete_user_with_wrong_user(client, other_user, token):
 
     assert response.status_code == HTTPStatus.FORBIDDEN
     assert response.json() == {'detail': 'Not enough permissions'}
+
+    forbidden_user = await session.scalar(
+        select(User).where(User.id == other_user.id)
+    )  # noqa
+
+    assert forbidden_user.is_deleted is False
+    assert forbidden_user.deleted_at is None

@@ -8,18 +8,21 @@ from sqlalchemy.orm import (
     mapped_column,
 )
 
+from .utils.mixins import BaseMixins
 
-class Base(DeclarativeBase, MappedAsDataclass):
+
+class Base(DeclarativeBase, MappedAsDataclass, BaseMixins):
     pass
 
 
 class User(Base):
     __tablename__ = 'users'
 
-    id: Mapped[int] = mapped_column(init=False, primary_key=True)
-    name: Mapped[str]
     email: Mapped[str] = mapped_column(unique=True)
+    name: Mapped[str]
     password: Mapped[str]
+
+    id: Mapped[int] = mapped_column(init=False, primary_key=True)
     created_at: Mapped[datetime] = mapped_column(
         init=False, server_default=func.now()
     )
