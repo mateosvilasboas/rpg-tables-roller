@@ -114,7 +114,7 @@ alembic upgrade head
 ### Executar testes
 
 ```bash
-task test
+poetry run task test
 ```
 
 O comando acima executa os testes com cobertura de código e gera um relatório HTML.
@@ -122,8 +122,8 @@ O comando acima executa os testes com cobertura de código e gera um relatório 
 ### Lint e formatação de código
 
 ```bash
-task lint     # verificar código
-task format   # formatar código automático
+poetry run task lint     # verificar código
+poetry run task format   # formatar código automático
 ```
 
 ## Autenticação
