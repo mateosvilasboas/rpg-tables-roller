@@ -17,4 +17,4 @@ class FrameworkFactory(factory.Factory):
         model = Framework
 
     name = factory.Faker('text')
-    user_id = 1
+    user_id = None

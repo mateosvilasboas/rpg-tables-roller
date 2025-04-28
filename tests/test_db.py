@@ -3,7 +3,7 @@ from dataclasses import asdict
 import pytest
 from sqlalchemy import select
 
-from project.models import User
+from project.models import Framework, User
 from project.security import get_password_hash
 
 
@@ -30,3 +30,65 @@ async def test_db_create_user(session, mock_db_time):
         'password': password_hash,
         'frameworks': [],
     }
+
+
+@pytest.mark.asyncio
+async def test_db_create_framework(session, mock_db_time, user: User):
+    with mock_db_time(model=Framework) as time:
+        new_framework = Framework(
+            name='framework',
+            user_id=user.id,
+        )
+
+        new_framework.entries = {
+            'key_1': 'value 1',
+            'key_2': 'value 2',
+            'key_3': 'value 3',
+            'key_4': 'value 4',
+        }
+
+        session.add(new_framework)
+        await session.commit()
+
+    framework = await session.scalar(
+        select(Framework).where(Framework.id == 1)
+    )
+
+    assert asdict(framework) == {
+        'created_at': time,
+        'updated_at': None,
+        'deleted_at': None,
+        'is_deleted': False,
+        'id': 1,
+        'name': 'framework',
+        'user_id': user.id,
+        'entries': {
+            'key_1': 'value 1',
+            'key_2': 'value 2',
+            'key_3': 'value 3',
+            'key_4': 'value 4',
+        },
+    }
+
+
+@pytest.mark.asyncio
+async def test_db_framework_relationship(session, user: User):
+    framework = Framework(
+        name='framework',
+        user_id=user.id,
+    )
+
+    framework.entries = {
+        'key_1': 'value 1',
+        'key_2': 'value 2',
+        'key_3': 'value 3',
+        'key_4': 'value 4',
+    }
+
+    session.add(framework)
+    await session.commit()
+    await session.refresh(user)
+
+    user = await session.scalar(select(User).where(User.id == user.id))
+
+    assert user.frameworks == [framework]

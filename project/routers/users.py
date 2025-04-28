@@ -1,18 +1,17 @@
 from http import HTTPStatus
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import and_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_db
 from ..models import User
 from ..schemas import (
-    FilterPage,
     Message,
-    UserList,
     UserPublic,
+    UserPublicList,
     UserSchemaCreate,
     UserSchemaUpdate,
 )
@@ -28,15 +27,12 @@ router = APIRouter(
 )
 
 
-@router.get('/', response_model=UserList)
-async def get_users(
-    filter_users: Annotated[FilterPage, Query()], session: Session
-):
+@router.get('/', response_model=UserPublicList)
+async def get_users(session: Session):
     query = await session.scalars(
-        select(User)
-        .where(User.is_deleted == False)  # noqa
-        .offset(filter_users.offset)
-        .limit(filter_users.limit)
+        select(User).where(
+            and_(User.is_deleted == False)  # noqa
+        )
     )
 
     users = query.all()
@@ -88,6 +84,8 @@ async def update_user(
         if user.password:
             current_user.password = get_password_hash(user.password)
 
+        current_user.set_updated_at()
+
         await session.commit()
         await session.refresh(current_user)
 
@@ -118,4 +116,25 @@ async def delete_user(
     current_user.soft_delete()
     await session.commit()
 
-    return {'message': 'User deleted'}
+    return {'detail': 'User deleted'}
+
+
+@router.put('/restore/{user_id}', response_model=UserPublic)
+async def restore_deleted_user(
+    user_id: int, session: Session, current_user: CurrentUser
+):
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=HTTPStatus.FORBIDDEN,
+            detail='Not enough permissions',
+        )
+
+    if not current_user.is_deleted:
+        raise HTTPException(
+            status_code=HTTPStatus.BAD_REQUEST, detail='User is not deleted'
+        )
+
+    current_user.restore()
+    await session.commit()
+
+    return current_user

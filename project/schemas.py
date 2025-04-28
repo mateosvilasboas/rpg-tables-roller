@@ -1,14 +1,15 @@
+from typing import Any
+
 from pydantic import BaseModel, ConfigDict, EmailStr
 
 
 class FrameworkSchema(BaseModel):
     name: str
-    entries: dict[str, str]
+    entries: dict[str, Any]
 
 
 class FrameworkPublic(BaseModel):
     id: int
-    user_id: int
     name: str
     entries: dict
 
@@ -32,11 +33,12 @@ class UserPublic(BaseModel):
     id: int
     name: str
     email: EmailStr
+    frameworks: list[FrameworkPublic]
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class UserList(BaseModel):
+class UserPublicList(BaseModel):
     users: list[UserPublic]
 
 
@@ -51,4 +53,4 @@ class Token(BaseModel):
 
 
 class Message(BaseModel):
-    message: str
+    detail: str

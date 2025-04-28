@@ -74,6 +74,7 @@ async def user(session):
     await session.commit()
     await session.refresh(user)
 
+    user.frameworks = []
     user.clean_password = password
 
     return user
@@ -89,14 +90,15 @@ async def other_user(session):
     await session.commit()
     await session.refresh(user)
 
+    user.frameworks = []
     user.clean_password = password
 
     return user
 
 
 @pytest_asyncio.fixture
-async def framework(session):
-    framework = FrameworkFactory()
+async def framework(session, user):
+    framework = FrameworkFactory(user_id=user.id)
 
     framework.entries = {
         'entry_key_1': 'entry_value_1',

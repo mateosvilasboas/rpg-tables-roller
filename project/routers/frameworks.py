@@ -2,6 +2,7 @@ from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..database import get_db
@@ -19,20 +20,26 @@ router = APIRouter(
 )
 
 
-# @router.get('/', response_model=UserList)
-# async def get_users(
-#     filter_users: Annotated[FilterPage, Query()], session: Session
-# ):
-#     query = await session.scalars(
-#         select(User)
-#         .where(User.is_deleted == False)  # noqa
-#         .offset(filter_users.offset)
-#         .limit(filter_users.limit)
-#     )
+@router.get('/{framework_id}', response_model=FrameworkPublic)
+async def get_framework(
+    framework_id: int, session: Session, current_user: CurrentUser
+):
+    framework = await session.scalar(
+        select(Framework).where(
+            and_(
+                Framework.id == framework_id,
+                Framework.user_id == current_user.id,
+                Framework.is_deleted == False,  # noqa
+            )
+        )
+    )
 
-#     users = query.all()
+    if not framework:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND, detail='Framework not found'
+        )
 
-#     return {'users': users}
+    return framework
 
 
 @router.post(
