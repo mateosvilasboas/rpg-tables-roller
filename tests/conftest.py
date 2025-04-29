@@ -174,7 +174,7 @@ async def framework(db_session, user):
 @pytest.fixture
 def token(client, user):
     response = client.post(
-        '/auth/create_token',
+        '/auth/token',
         data={'username': user.email, 'password': user.clean_password},
     )
 

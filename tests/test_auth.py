@@ -8,7 +8,7 @@ from project.security.auth import create_access_token
 
 def test_get_token(client, user):
     response = client.post(
-        '/auth/create_token/',
+        '/auth/token/',
         data={'username': user.email, 'password': user.clean_password},
     )
 
@@ -19,7 +19,7 @@ def test_get_token(client, user):
 
 def test_get_token_wrong_email(client, user):
     response = client.post(
-        '/auth/create_token/',
+        '/auth/token/',
         data={
             'username': 'wrong@email.com',
             'password': user.clean_password,
@@ -32,7 +32,7 @@ def test_get_token_wrong_email(client, user):
 
 def test_get_token_wrong_password(client, user):
     response = client.post(
-        '/auth/create_token/',
+        '/auth/token/',
         data={
             'username': user.email,
             'password': 'wrong_password',
@@ -45,7 +45,7 @@ def test_get_token_wrong_password(client, user):
 
 def test_user_doesnt_exist(client):
     response = client.post(
-        '/auth/create_token/',
+        '/auth/token/',
         data={
             'username': 'no_user@email.com',
             'password': 'teste',
@@ -58,7 +58,7 @@ def test_user_doesnt_exist(client):
 
 def test_user_wrong_password(client, user):
     response = client.post(
-        '/auth/create_token/',
+        '/auth/token/',
         data={
             'username': user.email,
             'password': 'password_errado',
@@ -97,7 +97,7 @@ def test_get_current_user_does_not_exist(client):
 def test_token_expiration(client, user):
     with freeze_time('2025-01-01 12:00:00'):
         response = client.post(
-            'auth/create_token/',
+            'auth/token/',
             data={'username': user.email, 'password': user.clean_password},
         )
 
@@ -136,7 +136,7 @@ def test_refresh_token(client, token):
 def test_token_expired_dont_refresh(client, user):
     with freeze_time('2025-01-01 12:00:00'):
         response = client.post(
-            '/auth/create_token',
+            '/auth/token',
             data={'username': user.email, 'password': user.clean_password},
         )
         assert response.status_code == HTTPStatus.OK

@@ -8,7 +8,7 @@ class Settings(BaseSettings):
 
     DB_URL: str
     SECRET_KEY: str
-    REDIS_URL: str
+    REDIS_URL: str = 'redis://localhost:6379'
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
 
