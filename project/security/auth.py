@@ -7,17 +7,21 @@ from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from jwt import DecodeError, ExpiredSignatureError, decode, encode
 from pwdlib import PasswordHash
+from redis import asyncio as redis_asyncio
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from project.config import settings
 from project.database import get_db
 from project.models import User
+from project.redis import get_redis
 
 password_context = PasswordHash.recommended()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/auth/token')
+RedisClient = Annotated[redis_asyncio.Redis, Depends(get_redis)]
 Session = Annotated[AsyncSession, Depends(get_db)]
+Token = Annotated[str, Depends(oauth2_scheme)]
 
 
 def create_access_token(data: dict):
@@ -34,17 +38,7 @@ def create_access_token(data: dict):
     return encoded_jwt
 
 
-def get_password_hash(password: str):
-    return password_context.hash(password)
-
-
-def verify_password(plain_password: str, hashed_password: str):
-    return password_context.verify(plain_password, hashed_password)
-
-
-async def get_current_user(
-    session: Session, token: str = Depends(oauth2_scheme)
-):
+async def get_current_user(session: Session, token: Token, redis: RedisClient):
     credentials_exception = HTTPException(
         status_code=HTTPStatus.UNAUTHORIZED,
         detail='Could not validate credentials',
@@ -52,6 +46,10 @@ async def get_current_user(
     )
 
     try:
+        denied = await redis.exists(f'denylist:{token}')
+        if denied:
+            raise credentials_exception
+
         payload = decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
@@ -72,3 +70,11 @@ async def get_current_user(
         raise credentials_exception
 
     return user
+
+
+def get_password_hash(password: str):
+    return password_context.hash(password)
+
+
+def verify_password(plain_password: str, hashed_password: str):
+    return password_context.verify(plain_password, hashed_password)

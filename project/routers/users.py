@@ -15,7 +15,7 @@ from ..schemas import (
     UserSchemaCreate,
     UserSchemaUpdate,
 )
-from ..security import get_current_user, get_password_hash
+from ..security.auth import get_current_user, get_password_hash
 
 Session = Annotated[AsyncSession, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_user)]

@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..database import get_db
 from ..models import Framework, User
 from ..schemas import FrameworkPublic, FrameworkSchema
-from ..security import get_current_user
+from ..security.auth import get_current_user
 
 Session = Annotated[AsyncSession, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
@@ -68,19 +68,13 @@ async def create_framework(
     return db_framework
 
 
-# @router.put('/{user_id}', response_model=UserPublic)
-# async def update_user(
-#     user_id: int,
-#     user: UserSchemaUpdate,
+# @router.put('/{user_id}', response_model=FrameworkPublic)
+# async def update_framework(
+#     framework_id: int,
+#     user: FrameworkSchema,
 #     session: Session,
 #     current_user: CurrentUser,
 # ):
-#     if current_user.id != user_id:
-#         raise HTTPException(
-#             status_code=HTTPStatus.FORBIDDEN,
-#             detail='Not enough permissions',
-#         )
-
 #     try:
 #         current_user.name = user.name
 #         current_user.email = user.email

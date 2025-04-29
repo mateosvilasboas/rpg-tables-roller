@@ -138,7 +138,7 @@ def test_update_user_with_wrong_user(client, other_user, token):
 
 
 @pytest.mark.asyncio
-async def test_delete_user(client, user, token, session):
+async def test_delete_user(client, user, token, db_session):
     response = client.delete(
         f'/users/{user.id}',
         headers={'Authorization': f'Bearer {token}'},
@@ -147,14 +147,18 @@ async def test_delete_user(client, user, token, session):
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {'detail': 'User deleted'}
 
-    deleted_user = await session.scalar(select(User).where(User.id == user.id))  # noqa
+    deleted_user = await db_session.scalar(
+        select(User).where(User.id == user.id)
+    )  # noqa
 
     assert deleted_user.is_deleted is True
     assert deleted_user.deleted_at is not None
 
 
 @pytest.mark.asyncio
-async def test_delete_user_with_wrong_user(client, other_user, token, session):
+async def test_delete_user_with_wrong_user(
+    client, other_user, token, db_session
+):
     response = client.delete(
         f'/users/{other_user.id}',
         headers={'Authorization': f'Bearer {token}'},
@@ -163,7 +167,7 @@ async def test_delete_user_with_wrong_user(client, other_user, token, session):
     assert response.status_code == HTTPStatus.FORBIDDEN
     assert response.json() == {'detail': 'Not enough permissions'}
 
-    forbidden_user = await session.scalar(
+    forbidden_user = await db_session.scalar(
         select(User).where(User.id == other_user.id)
     )  # noqa
 

@@ -1,11 +1,44 @@
+import re
+from http import HTTPStatus
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from fastapi import HTTPException
+from pydantic import BaseModel, ConfigDict, EmailStr, model_validator
 
 
 class FrameworkSchema(BaseModel):
     name: str
-    entries: dict[str, Any]
+    entries: dict[str, Any] = {
+        'line_0': 'data',
+        'line_1': 'data',
+        'line_2': 'data',
+    }
+
+    @model_validator(mode='after')
+    def validate_entries(self):
+        pattern = re.compile(r'^line_\d+$')
+
+        invalid_keys = [
+            key for key in self.entries.keys() if not pattern.match(key)
+        ]
+
+        if invalid_keys:
+            raise HTTPException(
+                status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+                detail=f"""The following keys do not follow 'line X' pattern: {
+                    ', '.join(invalid_keys)
+                }""",
+            )
+
+        numbers = [int(key.split('_')[1]) for key in self.entries.keys()]
+        expected_numbers_sequence = list(range(0, len(numbers)))
+
+        if numbers != expected_numbers_sequence:
+            raise HTTPException(
+                status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+                detail=f'Line numbers in dict keys are not sequencial and/or not ordered',  # noqa
+            )
+        return self
 
 
 class FrameworkPublic(BaseModel):

@@ -3,7 +3,7 @@ from http import HTTPStatus
 from jwt import decode
 
 from project.config import settings
-from project.security import (
+from project.security.auth import (
     create_access_token,
 )
 

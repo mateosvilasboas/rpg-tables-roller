@@ -10,10 +10,10 @@ def test_create_framework(client, token):
         json={
             'name': 'framework',
             'entries': {
-                'key_1': 'value 1',
-                'key_2': 'value 2',
-                'key_3': 'value 3',
-                'key_4': 'value 4',
+                'line_0': 'value 1',
+                'line_1': 'value 2',
+                'line_2': 'value 3',
+                'line_3': 'value 4',
             },
         },
     )
@@ -23,10 +23,10 @@ def test_create_framework(client, token):
         'id': 1,
         'name': 'framework',
         'entries': {
-            'key_1': 'value 1',
-            'key_2': 'value 2',
-            'key_3': 'value 3',
-            'key_4': 'value 4',
+            'line_0': 'value 1',
+            'line_1': 'value 2',
+            'line_2': 'value 3',
+            'line_3': 'value 4',
         },
     }
 
@@ -44,6 +44,50 @@ def test_create_framework_no_entries(client, token):
     assert response.status_code == HTTPStatus.BAD_REQUEST
     assert response.json() == {
         'detail': 'Framework must have at least one entry'
+    }
+
+
+def test_create_framework_wrong_line(client, token):
+    response = client.post(
+        '/frameworks/',
+        headers={'Authorization': f'Bearer {token}'},
+        json={
+            'name': 'framework',
+            'entries': {
+                'line_0': 'data',
+                'line_1': 'data',
+                'wrong_line': 'data',
+            },
+        },
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert response.json() == {
+        'detail': "The following keys do not follow 'line X' pattern: "
+        'wrong_line'
+    }
+
+
+def test_create_framework_wrong_numbers(client, token):
+    response = client.post(
+        '/frameworks/',
+        headers={'Authorization': f'Bearer {token}'},
+        json={
+            'name': 'framework',
+            'entries': {
+                'line_0': 'data',
+                'line_1': 'data',
+                'line_2': 'data',
+                'line_4': 'data',
+                'line_6': 'data',
+                'line_3': 'data',
+            },
+        },
+    )
+
+    assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
+    assert response.json() == {
+        'detail': 'Line numbers in dict keys are not sequencial and/or not ordered'  # noqa
     }
 
 
