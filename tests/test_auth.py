@@ -2,9 +2,7 @@ from http import HTTPStatus
 
 import pytest
 from freezegun import freeze_time
-from jwt import decode, encode
 
-from project.config import settings
 from project.security.auth import create_access_token
 
 
