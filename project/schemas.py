@@ -48,6 +48,10 @@ class FrameworkPublic(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class FrameworkPublicList(BaseModel):
+    frameworks: list[FrameworkPublic]
+
+
 class UserSchema(BaseModel):
     name: str
     email: EmailStr

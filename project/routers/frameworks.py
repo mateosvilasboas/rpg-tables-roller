@@ -7,7 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from project.database import get_db
 from project.models import Framework, User
-from project.schemas import FrameworkPublic, FrameworkSchema
+from project.schemas import (
+    FrameworkPublic,
+    FrameworkPublicList,
+    FrameworkSchema,
+    Message,
+)
 from project.security.auth import get_current_user
 from project.utils.constants import ErrorMessages
 
@@ -17,11 +22,30 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 router = APIRouter(
     prefix='/frameworks',
     tags=['frameworks'],
-    responses={404: {'detail': 'Not found'}},
+    responses={404: {'detail': ErrorMessages.NOT_FOUND}},
 )
 
 
-@router.get('/{framework_id}/', response_model=FrameworkPublic)
+@router.get('/', response_model=FrameworkPublicList)
+async def get_frameworks(
+    session: Session,
+    current_user: CurrentUser,
+):
+    frameworks = await session.scalars(
+        select(Framework).where(
+            and_(
+                Framework.user_id == current_user.id,
+                Framework.is_deleted == False,  # noqa
+            )
+        )
+    )
+    
+    query = frameworks.all()
+
+    return {"frameworks": query}
+
+
+@router.get('/{framework_id}', response_model=FrameworkPublic)
 async def get_framework(
     framework_id: int,
     session: Session,
@@ -72,48 +96,61 @@ async def create_framework(
     return db_framework
 
 
-# @router.put('/{user_id}', response_model=FrameworkPublic)
-# async def update_framework(
-#     framework_id: int,
-#     user: FrameworkSchema,
-#     session: Session,
-#     current_user: CurrentUser,
-# ):
-#     try:
-#         current_user.name = user.name
-#         current_user.email = user.email
+@router.put('/{framework_id}', response_model=FrameworkPublic)
+async def update_framework(
+    framework_id: int,
+    framework: FrameworkSchema,
+    session: Session,
+    current_user: CurrentUser,
+):
+    db_framework = await session.scalar(
+        select(Framework).where(
+            and_(
+                Framework.id == framework_id,
+                Framework.user_id == current_user.id,
+                Framework.is_deleted == False,  # noqa
+            )
+        )
+    )
 
-#         if user.password:
-#             current_user.password = get_password_hash(user.password)
+    if not db_framework:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail=ErrorMessages.FRAMEWORK_NOT_FOUND,
+        )
 
-#         await session.commit()
-#         await session.refresh(current_user)
+    db_framework.name = framework.name
+    db_framework.entries = framework.entries
 
-#         return current_user
+    await session.commit()
+    await session.refresh(current_user)
 
-#     except IntegrityError:
-#         raise HTTPException(
-#             status_code=HTTPStatus.CONFLICT,
-#             detail='Email already exists',
-#         )
+    return db_framework
 
 
-# @router.delete('/{user_id}', response_model=Message)
-# async def delete_user(
-#     user_id: int, session: Session, current_user: CurrentUser
-# ):
-#     if current_user.id != user_id:
-#         raise HTTPException(
-#             status_code=HTTPStatus.FORBIDDEN,
-#             detail=ErrorMessages.FORBIDDEN',
-#         )
+@router.delete('/{framework_id}', response_model=Message)
+async def delete_framework(
+    framework_id: int,
+    session: Session,
+    current_user: CurrentUser,
+):
+    db_framework = await session.scalar(
+        select(Framework).where(
+            and_(
+                Framework.id == framework_id,
+                Framework.user_id == current_user.id,
+                Framework.is_deleted == False,  # noqa
+            )
+        )
+    )
 
-#     if current_user.is_deleted:
-#         raise HTTPException(
-#             status_code=HTTPStatus.BAD_REQUEST, detail='User already deleted'
-#         )
+    if not db_framework:
+        raise HTTPException(
+            status_code=HTTPStatus.NOT_FOUND,
+            detail=ErrorMessages.FRAMEWORK_NOT_FOUND,
+        )
 
-#     current_user.soft_delete()
-#     await session.commit()
+    db_framework.soft_delete()
+    await session.commit()
 
-#     return {'message': 'User deleted'}
+    return {'detail': 'Framework deleted'}

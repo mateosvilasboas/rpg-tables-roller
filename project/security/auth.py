@@ -8,7 +8,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jwt import DecodeError, ExpiredSignatureError, decode, encode
 from pwdlib import PasswordHash
 from redis import asyncio as redis_asyncio
-from sqlalchemy import select
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from project.config import settings
@@ -64,7 +64,9 @@ async def get_current_user(session: Session, token: Token, redis: RedisClient):
         raise credentials_exception
 
     user = await session.scalar(
-        select(User).where(User.email == subject_email)
+        select(User).where(
+            and_(User.email == subject_email)  # noqa
+        )
     )
 
     if not user:

@@ -25,7 +25,7 @@ from project.utils.constants import ErrorMessages
 router = APIRouter(
     prefix='/auth',
     tags=['auth'],
-    responses={404: {'detail': 'Not found'}},
+    responses={404: {'detail': ErrorMessages.NOT_FOUND}},
 )
 
 Session = Annotated[AsyncSession, Depends(get_db)]

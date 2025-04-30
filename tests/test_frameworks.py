@@ -90,7 +90,7 @@ def test_create_framework_wrong_numbers(client, token):
     }
 
 
-def test_get_framework_by_id(client, framework, token):
+def test_get_framework(client, framework, token):
     framework_schema = FrameworkPublic.model_validate(framework).model_dump()
 
     response = client.get(
@@ -102,9 +102,78 @@ def test_get_framework_by_id(client, framework, token):
     assert response.json() == framework_schema
 
 
-def test_get_framework_by_id_not_found(client, token):
+def test_get_framework_not_found(client, token):
     response = client.get(
         '/frameworks/666',  # id does not belong to token's user
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Framework not found'}
+
+
+def test_update_framework(client, framework, token):
+    response = client.put(
+        f'/frameworks/{framework.id}',
+        headers={'Authorization': f'Bearer {token}'},
+        json={
+            'name': 'frameeework update',
+            'entries': {'row_0': 'yeehaw', 'row_1': 'ayoo silver'},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {
+        'id': framework.id,
+        'name': 'frameeework update',
+        'entries': {'row_0': 'yeehaw', 'row_1': 'ayoo silver'},
+    }
+
+
+def test_update_framework_not_found(client, token):
+    response = client.put(
+        '/frameworks/666',  # does not exist
+        headers={'Authorization': f'Bearer {token}'},
+        json={
+            'name': 'frameeework update',
+            'entries': {'row_0': 'yeehaw', 'row_1': 'ayoo silver'},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Framework not found'}
+
+
+def test_delete_framework(client, framework, token):
+    response = client.delete(
+        f'/frameworks/{framework.id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json() == {'detail': 'Framework deleted'}
+
+
+def test_delete_framework_not_found(client, token):
+    response = client.delete(
+        '/frameworks/666',  # does not exist
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {'detail': 'Framework not found'}
+
+
+def test_delete_framework_already_deleted(client, framework, token):
+    response = client.delete(
+        f'/frameworks/{framework.id}',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+
+    response = client.delete(
+        f'/frameworks/{framework.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
 

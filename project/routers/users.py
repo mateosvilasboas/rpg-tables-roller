@@ -24,7 +24,7 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 router = APIRouter(
     prefix='/users',
     tags=['users'],
-    responses={404: {'detail': 'Not found'}},
+    responses={404: {'detail': ErrorMessages.NOT_FOUND}},
 )
 
 
@@ -65,19 +65,12 @@ async def create_user(user: UserSchemaCreate, session: Session):
     return db_user
 
 
-@router.put('/{user_id}', response_model=UserPublic)
+@router.put('/', response_model=UserPublic)
 async def update_user(
-    user_id: int,
     user: UserSchemaUpdate,
     session: Session,
     current_user: CurrentUser,
 ):
-    if current_user.id != user_id:
-        raise HTTPException(
-            status_code=HTTPStatus.FORBIDDEN,
-            detail=ErrorMessages.FORBIDDEN,
-        )
-
     try:
         current_user.name = user.name
         current_user.email = user.email
@@ -99,20 +92,12 @@ async def update_user(
         )
 
 
-@router.delete('/{user_id}', response_model=Message)
-async def delete_user(
-    user_id: int, session: Session, current_user: CurrentUser
-):
-    if current_user.id != user_id:
-        raise HTTPException(
-            status_code=HTTPStatus.FORBIDDEN,
-            detail=ErrorMessages.FORBIDDEN,
-        )
-
+@router.delete('/', response_model=Message)
+async def delete_user(session: Session, current_user: CurrentUser):
     if current_user.is_deleted:
         raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST,
-            detail=ErrorMessages.USER_ALREADY_DELETED,
+            status_code=HTTPStatus.NOT_FOUND,
+            detail=ErrorMessages.USER_NOT_FOUND,
         )
 
     current_user.soft_delete()
