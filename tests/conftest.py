@@ -105,16 +105,13 @@ def mock_db_time():
 
 @pytest.fixture(autouse=True)
 def mock_redis_denylist(monkeypatch):
-    denied_tokens = {}
+    denied_tokens = set()
 
     async def mock_exists(self, key):
-        result = False
-        if key in denied_tokens:
-            result = True
-        return result
+        return key in denied_tokens
 
     async def mock_set(self, key, value, **kwargs):
-        denied_tokens[key] = value
+        denied_tokens.add(key)
         return True
 
     monkeypatch.setattr(redis_asyncio.Redis, 'exists', mock_exists)
@@ -158,10 +155,10 @@ async def framework(db_session, user):
     framework = FrameworkFactory(user_id=user.id)
 
     framework.entries = {
-        'entry_key_1': 'entry_value_1',
-        'entry_key_2': 'entry_value_2',
-        'entry_key_3': 'entry_value_3',
-        'entry_key_4': 'entry_value_4',
+        'row_0': 'string',
+        'row_1': 'string',
+        'row_2': 'string',
+        'row_3': 'string',
     }
 
     db_session.add(framework)

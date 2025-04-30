@@ -6,16 +6,17 @@ from sqlalchemy import and_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..database import get_db
-from ..models import User
-from ..schemas import (
+from project.database import get_db
+from project.models import User
+from project.schemas import (
     Message,
     UserPublic,
     UserPublicList,
     UserSchemaCreate,
     UserSchemaUpdate,
 )
-from ..security.auth import get_current_user, get_password_hash
+from project.security.auth import get_current_user, get_password_hash
+from project.utils.constants import ErrorMessages
 
 Session = Annotated[AsyncSession, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
@@ -50,7 +51,7 @@ async def create_user(user: UserSchemaCreate, session: Session):
         if db_user.email == user.email:
             raise HTTPException(
                 status_code=HTTPStatus.CONFLICT,
-                detail='Email already exists',
+                detail=ErrorMessages.EMAIL_EXISTS,
             )
 
     hashed_password = get_password_hash(user.password)
@@ -74,7 +75,7 @@ async def update_user(
     if current_user.id != user_id:
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN,
-            detail='Not enough permissions',
+            detail=ErrorMessages.FORBIDDEN,
         )
 
     try:
@@ -94,7 +95,7 @@ async def update_user(
     except IntegrityError:
         raise HTTPException(
             status_code=HTTPStatus.CONFLICT,
-            detail='Email already exists',
+            detail=ErrorMessages.EMAIL_EXISTS,
         )
 
 
@@ -105,18 +106,19 @@ async def delete_user(
     if current_user.id != user_id:
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN,
-            detail='Not enough permissions',
+            detail=ErrorMessages.FORBIDDEN,
         )
 
     if current_user.is_deleted:
         raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST, detail='User already deleted'
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail=ErrorMessages.USER_ALREADY_DELETED,
         )
 
     current_user.soft_delete()
     await session.commit()
 
-    return {'detail': 'User deleted'}
+    return {'detail': ErrorMessages.USER_DELETED}
 
 
 @router.put('/restore/{user_id}', response_model=UserPublic)
@@ -126,12 +128,13 @@ async def restore_deleted_user(
     if current_user.id != user_id:
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN,
-            detail='Not enough permissions',
+            detail=ErrorMessages.FORBIDDEN,
         )
 
     if not current_user.is_deleted:
         raise HTTPException(
-            status_code=HTTPStatus.BAD_REQUEST, detail='User is not deleted'
+            status_code=HTTPStatus.BAD_REQUEST,
+            detail=ErrorMessages.USER_NOT_DELETED,
         )
 
     current_user.restore()

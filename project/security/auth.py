@@ -15,6 +15,7 @@ from project.config import settings
 from project.database import get_db
 from project.models import User
 from project.redis import get_redis
+from project.utils.constants import ErrorMessages
 
 password_context = PasswordHash.recommended()
 
@@ -41,7 +42,7 @@ def create_access_token(data: dict):
 async def get_current_user(session: Session, token: Token, redis: RedisClient):
     credentials_exception = HTTPException(
         status_code=HTTPStatus.UNAUTHORIZED,
-        detail='Could not validate credentials',
+        detail=ErrorMessages.INVALID_CREDENTIALS,
         headers={'WWW-Authenticate': 'Bearer'},
     )
 

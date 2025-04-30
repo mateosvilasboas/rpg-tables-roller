@@ -1,6 +1,5 @@
 import re
 from http import HTTPStatus
-from typing import Any
 
 from fastapi import HTTPException
 from pydantic import BaseModel, ConfigDict, EmailStr, model_validator
@@ -8,15 +7,15 @@ from pydantic import BaseModel, ConfigDict, EmailStr, model_validator
 
 class FrameworkSchema(BaseModel):
     name: str
-    entries: dict[str, Any] = {
-        'line_0': 'data',
-        'line_1': 'data',
-        'line_2': 'data',
+    entries: dict[str, str] = {
+        'row_0': 'string',
+        'row_1': 'string',
+        'row_2': 'string',
     }
 
     @model_validator(mode='after')
     def validate_entries(self):
-        pattern = re.compile(r'^line_\d+$')
+        pattern = re.compile(r'^row_\d+$')
 
         invalid_keys = [
             key for key in self.entries.keys() if not pattern.match(key)
@@ -25,7 +24,7 @@ class FrameworkSchema(BaseModel):
         if invalid_keys:
             raise HTTPException(
                 status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
-                detail=f"""The following keys do not follow 'line X' pattern: {
+                detail=f"""The following keys do not follow 'row_X' pattern: {
                     ', '.join(invalid_keys)
                 }""",
             )

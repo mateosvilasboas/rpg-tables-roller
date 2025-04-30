@@ -5,10 +5,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..database import get_db
-from ..models import Framework, User
-from ..schemas import FrameworkPublic, FrameworkSchema
-from ..security.auth import get_current_user
+from project.database import get_db
+from project.models import Framework, User
+from project.schemas import FrameworkPublic, FrameworkSchema
+from project.security.auth import get_current_user
+from project.utils.constants import ErrorMessages
 
 Session = Annotated[AsyncSession, Depends(get_db)]
 CurrentUser = Annotated[User, Depends(get_current_user)]
@@ -20,9 +21,11 @@ router = APIRouter(
 )
 
 
-@router.get('/{framework_id}', response_model=FrameworkPublic)
+@router.get('/{framework_id}/', response_model=FrameworkPublic)
 async def get_framework(
-    framework_id: int, session: Session, current_user: CurrentUser
+    framework_id: int,
+    session: Session,
+    current_user: CurrentUser,
 ):
     framework = await session.scalar(
         select(Framework).where(
@@ -36,7 +39,8 @@ async def get_framework(
 
     if not framework:
         raise HTTPException(
-            status_code=HTTPStatus.NOT_FOUND, detail='Framework not found'
+            status_code=HTTPStatus.NOT_FOUND,
+            detail=ErrorMessages.FRAMEWORK_NOT_FOUND,
         )
 
     return framework
@@ -56,7 +60,7 @@ async def create_framework(
     if not framework.entries:
         raise HTTPException(
             status_code=HTTPStatus.BAD_REQUEST,
-            detail='Framework must have at least one entry',
+            detail=ErrorMessages.FRAMEWORK_EMPTY_ENTRIES,
         )
 
     db_framework.entries = framework.entries
@@ -101,7 +105,7 @@ async def create_framework(
 #     if current_user.id != user_id:
 #         raise HTTPException(
 #             status_code=HTTPStatus.FORBIDDEN,
-#             detail='Not enough permissions',
+#             detail=ErrorMessages.FORBIDDEN',
 #         )
 
 #     if current_user.is_deleted:

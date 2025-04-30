@@ -1,6 +1,6 @@
 from redis import asyncio as redis_asyncio
 
-from .config import settings
+from project.config import settings
 
 
 async def get_redis():

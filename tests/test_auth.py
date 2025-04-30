@@ -106,7 +106,7 @@ def test_token_expiration(client, user):
 
     with freeze_time('2025-01-01 12:31:00'):
         response = client.put(
-            f'/users/{user.id}',
+            f'/users/{user.id}/',
             headers={'Authorization': f'Bearer {token}'},
             json={
                 'name': 'errado da silva',
@@ -121,7 +121,7 @@ def test_token_expiration(client, user):
 
 def test_refresh_token(client, token):
     response = client.post(
-        '/auth/refresh_token',
+        '/auth/refresh_token/',
         headers={'Authorization': f'Bearer {token}'},
     )
 
@@ -133,10 +133,27 @@ def test_refresh_token(client, token):
     assert data['token_type'] == 'bearer'
 
 
+def test_refresh_token_in_denylist(client, token):
+    response = client.post(
+        '/auth/revoke_token',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.OK
+
+    response = client.post(
+        '/auth/refresh_token',
+        headers={'Authorization': f'Bearer {token}'},
+    )
+
+    assert response.status_code == HTTPStatus.UNAUTHORIZED
+    assert response.json() == {'detail': 'Could not validate credentials'}
+
+
 def test_token_expired_dont_refresh(client, user):
     with freeze_time('2025-01-01 12:00:00'):
         response = client.post(
-            '/auth/token',
+            '/auth/token/',
             data={'username': user.email, 'password': user.clean_password},
         )
         assert response.status_code == HTTPStatus.OK
@@ -144,7 +161,7 @@ def test_token_expired_dont_refresh(client, user):
 
     with freeze_time('2025-01-01 12:31:00'):
         response = client.post(
-            '/auth/refresh_token',
+            '/auth/refresh_token/',
             headers={'Authorization': f'Bearer {token}'},
         )
         assert response.status_code == HTTPStatus.UNAUTHORIZED
@@ -160,7 +177,7 @@ def test_logout(client, user, token):
     assert response.json() == {'detail': 'Successfully logged out'}
 
     response = client.put(
-        f'/users/{user.id}',
+        f'/users/{user.id}/',
         headers={'Authorization': f'Bearer {token}'},
         json={
             'name': 'bob2',

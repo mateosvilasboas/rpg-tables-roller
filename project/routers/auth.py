@@ -20,6 +20,7 @@ from project.security.auth import (
     oauth2_scheme,
     verify_password,
 )
+from project.utils.constants import ErrorMessages
 
 router = APIRouter(
     prefix='/auth',
@@ -34,7 +35,7 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 TokenDependecy = Annotated[str, Depends(oauth2_scheme)]
 
 
-@router.post('/token/', response_model=Token)
+@router.post('/token', response_model=Token)
 async def login(form_data: OAuth2Form, session: Session):
     user = await session.scalar(
         select(User).where(User.email == form_data.username)
@@ -43,13 +44,13 @@ async def login(form_data: OAuth2Form, session: Session):
     if not user:
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
-            detail='Wrong email or password',
+            detail=ErrorMessages.WRONG_EMAIL_OR_PASSWORD,
         )
 
     if not verify_password(form_data.password, user.password):
         raise HTTPException(
             status_code=HTTPStatus.UNAUTHORIZED,
-            detail='Wrong email or password',
+            detail=ErrorMessages.WRONG_EMAIL_OR_PASSWORD,
         )
 
     access_token = create_access_token(data={'sub': user.email})
@@ -60,7 +61,7 @@ async def login(form_data: OAuth2Form, session: Session):
     return token
 
 
-@router.post('/revoke_token/', response_model=Message)
+@router.post('/revoke_token', response_model=Message)
 async def logout(
     token: TokenDependecy, redis: RedisClient, current_user: CurrentUser
 ):
@@ -72,7 +73,7 @@ async def logout(
     if email != current_user.email:
         raise HTTPException(
             status_code=HTTPStatus.FORBIDDEN,
-            detail='Not enough permissions',
+            detail=ErrorMessages.FORBIDDEN,
         )
 
     exp = payload.get('exp', 0)
@@ -81,14 +82,13 @@ async def logout(
 
     await redis.set(f'denylist:{token}', '1', ex=ttl)
 
-    return {'detail': 'Successfully logged out'}
+    return {'detail': ErrorMessages.LOGOUT_SUCCESS}
 
 
-@router.post('/refresh_token/', response_model=Token)
-async def refresh_access_token(current_user: CurrentUser):
-    new_access_token = create_access_token(data={'sub': current_user.email})
-    token_type = 'bearer'
+@router.post('/refresh_token', response_model=Token)
+async def refresh_token(
+    token: TokenDependecy, redis: RedisClient, current_user: CurrentUser
+):
+    access_token = create_access_token(data={'sub': current_user.email})
 
-    token = {'access_token': new_access_token, 'token_type': token_type}
-
-    return token
+    return {'access_token': access_token, 'token_type': 'bearer'}

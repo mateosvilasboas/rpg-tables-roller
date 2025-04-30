@@ -10,10 +10,10 @@ def test_create_framework(client, token):
         json={
             'name': 'framework',
             'entries': {
-                'line_0': 'value 1',
-                'line_1': 'value 2',
-                'line_2': 'value 3',
-                'line_3': 'value 4',
+                'row_0': 'value 1',
+                'row_1': 'value 2',
+                'row_2': 'value 3',
+                'row_3': 'value 4',
             },
         },
     )
@@ -23,10 +23,10 @@ def test_create_framework(client, token):
         'id': 1,
         'name': 'framework',
         'entries': {
-            'line_0': 'value 1',
-            'line_1': 'value 2',
-            'line_2': 'value 3',
-            'line_3': 'value 4',
+            'row_0': 'value 1',
+            'row_1': 'value 2',
+            'row_2': 'value 3',
+            'row_3': 'value 4',
         },
     }
 
@@ -54,17 +54,16 @@ def test_create_framework_wrong_line(client, token):
         json={
             'name': 'framework',
             'entries': {
-                'line_0': 'data',
-                'line_1': 'data',
-                'wrong_line': 'data',
+                'row_0': 'data',
+                'row_1': 'data',
+                'wrong_row': 'data',
             },
         },
     )
 
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
     assert response.json() == {
-        'detail': "The following keys do not follow 'line X' pattern: "
-        'wrong_line'
+        'detail': "The following keys do not follow 'row_X' pattern: wrong_row"
     }
 
 
@@ -75,12 +74,12 @@ def test_create_framework_wrong_numbers(client, token):
         json={
             'name': 'framework',
             'entries': {
-                'line_0': 'data',
-                'line_1': 'data',
-                'line_2': 'data',
-                'line_4': 'data',
-                'line_6': 'data',
-                'line_3': 'data',
+                'row_0': 'data',
+                'row_1': 'data',
+                'row_2': 'data',
+                'row_4': 'data',
+                'row_6': 'data',
+                'row_3': 'data',
             },
         },
     )

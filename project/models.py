@@ -8,7 +8,7 @@ from sqlalchemy.orm import (
     relationship,
 )
 
-from .utils.mixins import BaseMixins
+from project.utils.mixins import BaseMixins
 
 
 class Base(DeclarativeBase, MappedAsDataclass, BaseMixins):
